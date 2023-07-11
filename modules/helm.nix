@@ -120,6 +120,16 @@ in
             type = types.listOf types.attrs;
             default = [ ];
           };
+
+          outputHash = mkOption {
+            description = ''
+              FOD hash for "helm template" command.
+              
+              Without this some charts will fail to build due to validation error, if their's schema references some remote schema.
+              '';
+            type = types.str;
+            default = null;
+          };
         };
 
         config.overrides = mkIf (config.overrideNamespace && config.namespace != null) [{
@@ -127,7 +137,7 @@ in
         }];
 
         config.objects = importJSON (helm.chart2json {
-          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions;
+          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions outputHash;
         });
       }));
       default = { };
