@@ -1,4 +1,4 @@
-{ runCommand, lib, kubernetes-helm, yq }:
+{ runCommand, lib, kubernetes-helm, yq, cacert }:
 with lib;
 {
   # chart to template
@@ -17,11 +17,13 @@ with lib;
 , noHooks ? false
   # Kubernetes api versions used for Capabilities.APIVersions (--api-versions)
 , apiVersions ? null
+  # fixed-output derivation mode
+, outputHash ? null
 }:
 let
   valuesJsonFile = builtins.toFile "${name}-values.json" (builtins.toJSON values);
   # The `helm template` and YAML -> JSON steps are separate `runCommand` derivations for easier debuggability
-  resourcesYaml = runCommand "${name}.yaml" { nativeBuildInputs = [ kubernetes-helm ]; } ''
+  resourcesYaml = runCommand "${name}.yaml" { nativeBuildInputs = [ kubernetes-helm cacert ]; inherit outputHash; } ''
     helm template "${name}" \
         ${optionalString (apiVersions != null && apiVersions != []) "--api-versions ${lib.strings.concatStringsSep "," apiVersions}"} \
         ${optionalString (kubeVersion != null) "--kube-version ${kubeVersion}"} \
