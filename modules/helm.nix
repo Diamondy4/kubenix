@@ -120,15 +120,15 @@ in
             type = types.listOf types.attrs;
             default = [ ];
           };
-
-          outputHash = mkOption {
+          extraDerivationArgs = mkOption {
             description = ''
-              FOD hash for "helm template" command.
-              
-              Without this some charts will fail to build due to validation error, if their's schema references some remote schema.
+              Extra arguments for "helm template" derivation.
+
+              Can be used for FOD mode - without FOD some charts will fail to build due to validation error,
+              if their's schema references some remote schema (needs internet access).
               '';
-            type = types.str;
-            default = null;
+            type = types.attrs;
+            default = { };
           };
         };
 
@@ -137,7 +137,7 @@ in
         }];
 
         config.objects = importJSON (helm.chart2json {
-          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions outputHash;
+          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions extraDerivationArgs;
         });
       }));
       default = { };
