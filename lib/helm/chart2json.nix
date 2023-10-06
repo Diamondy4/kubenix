@@ -1,4 +1,4 @@
-{ runCommand, lib, kubernetes-helm, yq, cacert }:
+{ runCommand, writeText, lib, kubernetes-helm, yq, cacert }:
 with lib;
 {
   # chart to template
@@ -17,13 +17,13 @@ with lib;
 , noHooks ? false
   # Kubernetes api versions used for Capabilities.APIVersions (--api-versions)
 , apiVersions ? null
-  # fixed-output derivation mode
-, outputHash ? null
+  # extra args for helm template derivation
+, extraDerivationArgs ? { }
 }:
 let
-  valuesJsonFile = builtins.toFile "${name}-values.json" (builtins.toJSON values);
-  # The `helm template` and YAML -> JSON steps are separate `runCommand` derivations for easier debuggability
-  resourcesYaml = runCommand "${name}.yaml" { nativeBuildInputs = [ kubernetes-helm cacert ]; inherit outputHash; } ''
+  valuesJsonFile = writeText "${name}-values.json" (builtins.toJSON values);
+  # The `helm template` and YAML -> JSON steps are separate `runCommand` derivat}ions for easier debuggability
+  resourcesYaml = runCommand "${name}.yaml" (recursiveUpdate { nativeBuildInputs = [ kubernetes-helm cacert ]; } extraDerivationArgs) ''
     helm template "${name}" \
         ${optionalString (apiVersions != null && apiVersions != []) "--api-versions ${lib.strings.concatStringsSep "," apiVersions}"} \
         ${optionalString (kubeVersion != null) "--kube-version ${kubeVersion}"} \
@@ -35,6 +35,8 @@ let
   '';
 in
 runCommand "${name}.json" { } ''
+  echo "the_path ${resourcesYaml}"
+  touch $out
   # Remove null values
   ${yq}/bin/yq -Scs 'walk(
     if type == "object" then
@@ -43,5 +45,5 @@ runCommand "${name}.json" { } ''
       map(select(. != null))
     else
       .
-    end)' ${resourcesYaml} >$out
+    end)' ${resourcesYaml} > $out
 ''
