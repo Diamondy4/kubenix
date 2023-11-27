@@ -6,13 +6,6 @@ with lib; let
 
   globalConfig = config;
 
-  recursiveAttrs = mkOptionType {
-    name = "recursive-attrs";
-    description = "recursive attribute set";
-    check = isAttrs;
-    merge = _loc: foldl' (res: def: recursiveUpdate res def.value) { };
-  };
-
   parseApiVersion = apiVersion:
     let
       splitted = splitString "/" apiVersion;
@@ -52,7 +45,19 @@ in
 
           values = mkOption {
             description = "Values to pass to chart";
-            type = recursiveAttrs;
+            type =  with lib.types; let
+              valueType = nullOr (oneOf [
+                  bool
+                  int
+                  float
+                  str
+                  path
+                  (attrsOf valueType)
+                  (listOf valueType)
+                ]) // {
+                  description = "JSON value";
+                };
+              in valueType;
             default = { };
           };
 
