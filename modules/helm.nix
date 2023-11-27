@@ -6,13 +6,6 @@ with lib; let
 
   globalConfig = config;
 
-  recursiveAttrs = mkOptionType {
-    name = "recursive-attrs";
-    description = "recursive attribute set";
-    check = isAttrs;
-    merge = _loc: foldl' (res: def: recursiveUpdate res def.value) { };
-  };
-
   parseApiVersion = apiVersion:
     let
       splitted = splitString "/" apiVersion;
@@ -52,7 +45,19 @@ in
 
           values = mkOption {
             description = "Values to pass to chart";
-            type = recursiveAttrs;
+            type =  with lib.types; let
+              valueType = nullOr (oneOf [
+                  bool
+                  int
+                  float
+                  str
+                  path
+                  (attrsOf valueType)
+                  (listOf valueType)
+                ]) // {
+                  description = "JSON value";
+                };
+              in valueType;
             default = { };
           };
 
@@ -103,7 +108,7 @@ in
             description = ''
               Inform Helm about which CRDs are available in the cluster (`--api-versions` option).
               This is useful for charts which contain `.Capabilities.APIVersions.Has` checks.
-              If you use `kubernetes.customTypes` to make kubenix aware of CRDs, it will include those as well by default. 
+              If you use `kubernetes.customTypes` to make kubenix aware of CRDs, it will include those as well by default.
             '';
             type = types.listOf types.str;
             default = builtins.concatMap
