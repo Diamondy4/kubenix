@@ -17,12 +17,22 @@ with lib;
 , noHooks ? false
   # Kubernetes api versions used for Capabilities.APIVersions (--api-versions)
 , apiVersions ? null
+  # remove values.schema.json if present
+, removeValuesSchema ? false
   # extra args for helm template derivation
 , extraDerivationArgs ? { }
 }:
 let
   valuesJsonFile = writeText "${name}-values.json" (builtins.toJSON values);
   # The `helm template` and YAML -> JSON steps are separate `runCommand` derivat}ions for easier debuggability
+  chartNoValuesSchema = runCommand chart.name {} ''
+    mkdir $out
+    cp -r ${chart}/* $out
+    rm -f $out/values.schema.json
+  '';
+  chart' = if removeValuesSchema
+    then chartNoValuesSchema
+    else chart;
   resourcesYaml = runCommand "${name}.yaml" (recursiveUpdate { nativeBuildInputs = [ kubernetes-helm cacert ]; } extraDerivationArgs) ''
     helm template "${name}" \
         ${optionalString (apiVersions != null && apiVersions != []) "--api-versions ${lib.strings.concatStringsSep "," apiVersions}"} \
@@ -31,7 +41,7 @@ let
         ${optionalString (values != {}) "-f ${valuesJsonFile}"} \
         ${optionalString includeCRDs "--include-crds"} \
         ${optionalString noHooks "--no-hooks"} \
-        ${chart} >$out
+        ${chart'} >$out
   '';
 in
 runCommand "${name}.json" { } ''
