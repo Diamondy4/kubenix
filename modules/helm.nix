@@ -125,6 +125,20 @@ in
             type = types.listOf types.attrs;
             default = [ ];
           };
+
+          removeValuesSchema = mkOption {
+            description = ''
+              Whether to remove values.schema.json.
+
+              Some Helm Charts use external references in values.schema.json, which are not allowed in pure nix mode.
+              This fixes https://github.com/hall/kubenix/issues/53 issue with methods similar to https://github.com/rancher/fleet/pull/1769
+              by removing values.schema.json completely.
+              Warning: this will remove helm chart schema check completely!
+            '';
+            type = types.bool;
+            default = false;
+          };
+
           extraDerivationArgs = mkOption {
             description = ''
               Extra arguments for "helm template" derivation.
@@ -142,7 +156,7 @@ in
         }];
 
         config.objects = importJSON (helm.chart2json {
-          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions extraDerivationArgs;
+          inherit (config) chart name namespace values kubeVersion includeCRDs noHooks apiVersions removeValuesSchema extraDerivationArgs;
         });
       }));
       default = { };
