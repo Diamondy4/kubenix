@@ -14,6 +14,7 @@ let
     "1.28.10" = "sha256:14pvc7ys1x4p6gzmdgabmncl6iwaf2fj0a2j58rv00wndfh62vng";
     "1.29.5" = "sha256:1shik1cbi415cq9ddn564xd1d73g2rzfrna85aqskxavncagkscb";
     "1.30.1" = "sha256:1d7pqf6bkqpkr5jgh716wmzfcyanpm9ybdn3ix1ywvwxbq45dgzj";
+    "1.31.6" = "sha256:13bz4jjfix2dnc4bvrcil8np2i5zlz9qfqxmmlgrz1457mf3vjyx";
   };
 in
 {
